@@ -14,17 +14,23 @@ interface Order {
 }
 
 export default function OrdersPage() {
-  const [orders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const { register, handleSubmit, reset } = useForm<Order>();
 
   // Fetch orders from an API (mock API here)
   const fetchOrders = async () => {
-    const response = await axios.get("/api/orders");
-    console.log(response);
+    try {
+      const response = await axios.get<Order[]>("/api/orders");
+      setOrders(response.data);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   useEffect(() => {
+    console.log(process.env.NEXT_PUBLIC_DATABASE_URL);
+
     fetchOrders();
   }, []);
 
