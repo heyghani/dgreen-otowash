@@ -14,11 +14,59 @@ datasource db {
 }
 
 model Order {
-  id           Int      @id @default(autoincrement())
-  customerName String
-  item         String
-  quantity     Int
-  price        Float
-  createdAt    DateTime @default(now())
+  id           Int       @id @default(autoincrement())
+  receiptNumber String   @default(uuid())
+  startTime     DateTime
+  finishTime    DateTime
+  unitNumber    String
+  unitName      String
+  customerName  String
+  address       String
+  phoneNumber   String
+  services      Service[] @relation("OrderServices")  // Many-to-many relationship with services
+  orderAddOns   OrderAddOn[] // Link to the add-ons with quantity
+  items         OrderItem[] // Array of items (e.g., Carpet, Pillow, etc.)
+  totalPayment  Float
+  discount      Float?
+  totalPaid     Float
+  totalItems    Int
+  totalChanges  Float
+  createdAt     DateTime @default(now())
 }
+
+model OrderItem {
+  id       Int    @id @default(autoincrement())
+  itemName String
+  order    Order  @relation(fields: [orderId], references: [id])
+  orderId  Int
+}
+
+model Service {
+  id          Int     @id @default(autoincrement())
+  serviceName String
+  serviceType String
+  price       Float
+  orders      Order[] @relation("OrderServices")
+}
+
+model AddOn {
+  id          Int     @id @default(autoincrement())
+  addOnName   String
+  price       Float
+  orders      OrderAddOn[] // Relationship with the intermediate table
+}
+
+model OrderAddOn {
+  id        Int     @id @default(autoincrement())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   Int
+  addOn     AddOn   @relation(fields: [addOnId], references: [id])
+  addOnId   Int
+  quantity  Int     // The quantity specific to this order's add-on
+  totalPrice Float  // Total price for the add-on based on quantity
+}
+
+
+
+
 
