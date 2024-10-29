@@ -14,24 +14,29 @@ datasource db {
 }
 
 model Order {
-  id           Int       @id @default(autoincrement())
-  receiptNumber String   @default(uuid())
+  id            Int       @id @default(autoincrement())
+  receiptNumber String    @unique
   startTime     DateTime
-  finishTime    DateTime
-  unitNumber    String
-  unitName      String
-  customerName  String
-  address       String
-  phoneNumber   String
-  services      Service[] @relation("OrderServices")  // Many-to-many relationship with services
-  orderAddOns   OrderAddOn[] // Link to the add-ons with quantity
-  items         OrderItem[] // Array of items (e.g., Carpet, Pillow, etc.)
-  totalPayment  Float
-  discount      Float?
-  totalPaid     Float
-  totalItems    Int
-  totalChanges  Float
-  createdAt     DateTime @default(now())
+  finishTime    DateTime?
+  status        String    @default("in_progress") // Status to indicate whether the order is in progress or completed
+
+  unitNumber   String
+  unitName     String
+  customerName String
+  address      String
+  phoneNumber  String
+
+  services OrderService[]
+  addOns   OrderAddOn[]
+
+  totalPayment Float?
+  discount     Float?
+  totalPaid    Float?
+  totalItems   Int?
+  totalChanges Float?
+  items        OrderItem[]
+
+  createdAt DateTime @default(now())
 }
 
 model OrderItem {
@@ -42,31 +47,44 @@ model OrderItem {
 }
 
 model Service {
-  id          Int     @id @default(autoincrement())
-  serviceName String
-  serviceType String
-  price       Float
-  orders      Order[] @relation("OrderServices")
+  id            Int            @id @default(autoincrement())
+  serviceName   String
+  serviceTypes  ServiceType[]
+  orderServices OrderService[]
+}
+
+model ServiceType {
+  id           Int            @id @default(autoincrement())
+  service      Service        @relation(fields: [serviceId], references: [id])
+  serviceId    Int
+  serviceType  String // Defines the type: "small", "medium", "large"
+  price        Float // Price specific to this service type
+  OrderService OrderService[]
 }
 
 model AddOn {
-  id          Int     @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   addOnName   String
   price       Float
-  orders      OrderAddOn[] // Relationship with the intermediate table
+  orderAddOns OrderAddOn[]
+}
+
+model OrderService {
+  id            Int         @id @default(autoincrement())
+  order         Order       @relation(fields: [orderId], references: [id])
+  orderId       Int
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+  serviceTypeId Int // Refers to the specific service type (small, medium, large)
+  service       Service?    @relation(fields: [serviceId], references: [id])
+  serviceId     Int?
 }
 
 model OrderAddOn {
-  id        Int     @id @default(autoincrement())
-  order     Order   @relation(fields: [orderId], references: [id])
-  orderId   Int
-  addOn     AddOn   @relation(fields: [addOnId], references: [id])
-  addOnId   Int
-  quantity  Int     // The quantity specific to this order's add-on
-  totalPrice Float  // Total price for the add-on based on quantity
+  id         Int   @id @default(autoincrement())
+  order      Order @relation(fields: [orderId], references: [id])
+  orderId    Int
+  addOn      AddOn @relation(fields: [addOnId], references: [id])
+  addOnId    Int
+  quantity   Int // Quantity of this add-on in the order
+  totalPrice Float // Calculated based on quantity and price of add-on
 }
-
-
-
-
-

@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import {
-  createServicesQuery,
-  deleteServicesQuery,
-  getAllServicesQuery,
-  updateServicesQuery,
-} from "./queries";
-import { IService } from "@/libs/interfaces/order";
+import { PrismaClient } from "@prisma/client";
+import { IServiceType } from "@/libs/interfaces/order";
+
+const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const services = await getAllServicesQuery();
+    const services = await prisma.service.findMany({
+      include: {
+        serviceTypes: true,
+      },
+    });
     return NextResponse.json({ data: services });
   } catch (error) {
     return NextResponse.json(
@@ -21,13 +22,19 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { serviceName, price } = await req.json();
-    const data: IService = {
-      serviceName,
-      price,
-    };
-    const newService = await createServicesQuery(data);
-    return NextResponse.json(newService, { status: 201 });
+    const { serviceName, serviceType } = await req.json();
+    const newService = await prisma.service.create({
+      data: {
+        serviceName,
+        serviceTypes: {
+          create: serviceType?.map((type: IServiceType) => ({
+            serviceType: type.serviceType,
+            price: type.price,
+          })),
+        },
+      },
+    });
+    return NextResponse.json({ data: newService }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to create service" },
@@ -38,13 +45,22 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    const { id, serviceName, price } = await req.json();
-    const data: IService = {
-      serviceName,
-      price,
-    };
-    const updatedService = updateServicesQuery(data, id);
-    return NextResponse.json(updatedService);
+    const { id, serviceName, serviceType } = await req.json();
+
+    const updatedService = await prisma.service.update({
+      where: { id },
+      data: {
+        serviceName,
+        serviceTypes: {
+          deleteMany: {},
+          create: serviceType?.map((type: IServiceType) => ({
+            serviceType: type.serviceType,
+            price: type.price,
+          })),
+        },
+      },
+    });
+    return NextResponse.json({ data: updatedService });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to update service" },
@@ -57,7 +73,9 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const { id } = await req.json();
-    await deleteServicesQuery(id);
+    await prisma.service.delete({
+      where: { id },
+    });
     return NextResponse.json({ message: "Service deleted successfully" });
   } catch (error) {
     return NextResponse.json(

@@ -18,7 +18,7 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       const response = await axios.get<IOrder[]>("/api/orders");
-      setOrders(response.data);
+      setOrders(response.data.data);
     } catch (err) {
       console.log(err);
     }

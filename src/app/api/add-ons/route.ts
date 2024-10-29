@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
-import {
-  createAddOnsQuery,
-  deleteAddOnsQuery,
-  getAllAddOnsQuery,
-  updateAddOnsQuery,
-} from "./queries";
-import { IAddOn } from "@/libs/interfaces/order";
+
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const addOns = await getAllAddOnsQuery();
+    const addOns = await prisma.addOn.findMany();
     return NextResponse.json({ data: addOns });
   } catch (error) {
     return NextResponse.json(
@@ -22,11 +19,13 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const { addOnName, price } = await req.json();
-    const data: IAddOn = {
-      addOnName,
-      price,
-    };
-    const newAddOn = await createAddOnsQuery(data);
+
+    const newAddOn = await prisma.addOn.create({
+      data: {
+        addOnName,
+        price,
+      },
+    });
     return NextResponse.json({ data: newAddOn }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
@@ -39,12 +38,15 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const { id, addOnName, price } = await req.json();
-    const data: IAddOn = {
-      addOnName,
-      price,
-    };
-    const updatedAddOn = await updateAddOnsQuery(data, id);
-    return NextResponse.json(updatedAddOn);
+
+    const updatedAddOn = await prisma.addOn.update({
+      where: { id },
+      data: {
+        addOnName,
+        price,
+      },
+    });
+    return NextResponse.json({ data: updatedAddOn });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to update add-on" },
@@ -56,7 +58,7 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const { id } = await req.json();
-    await deleteAddOnsQuery(id);
+    await prisma.addOn.delete({ where: { id } });
     return NextResponse.json({ message: "Add-on deleted successfully" });
   } catch (error) {
     return NextResponse.json(

@@ -20,6 +20,20 @@ const Sidebar = () => {
           >
             <Link href="/home/orders">Orders</Link>
           </li>
+          <li
+            className={
+              pathname === "/home/services" ? "sidebar active" : "sidebar"
+            }
+          >
+            <Link href="/home/services">Services</Link>
+          </li>
+          <li
+            className={
+              pathname === "/home/add-on" ? "sidebar active" : "sidebar"
+            }
+          >
+            <Link href="/home/add-on">Add-on</Link>
+          </li>
         </ul>
       </nav>
     </aside>

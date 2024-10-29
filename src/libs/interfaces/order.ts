@@ -1,41 +1,61 @@
 export interface IOrder {
   id?: number;
   receiptNumber?: string;
-  customerId?: string;
   startTime: string;
-  finishTime: string;
+  finishTime?: string;
   unitNumber: string;
   unitName: string;
   customerName: string;
   address: string;
   phoneNumber: string;
-  services: IService[];
-  addOns: IAddOn[];
+  services: IOrderService[];
+  addOns: IOrderAddOn[];
   totalPayment?: number;
-  discount: number;
+  discount?: number;
   totalPaid?: number;
   totalItems?: number;
   totalChanges?: number;
-  items: string[];
+  items: IOrderItem[];
+  status: string;
+}
+
+export interface IOrderItem {
+  id?: number;
+  itemName: string;
 }
 
 export interface IAddOn {
   id?: number;
   addOnName: string;
   price: number;
-  quantity: number;
+  orderAddOns?: IOrderAddOn[];
 }
 
 export interface IOrderAddOn {
   id?: number;
   orderId?: number;
   addOnId?: number;
-  quantity?: number;
+  quantity: number;
+  totalPrice: number;
 }
 
 export interface IService {
   id?: number;
   serviceName: string;
-  serviceType?: string;
+  serviceType: IServiceType[];
+  price: number;
+  orderServices?: IOrderService[];
+}
+
+export interface IServiceType {
+  serviceType: string;
+  price: number;
+}
+
+export interface IOrderService {
+  id?: number;
+  orderId?: number;
+  serviceId?: number;
+  serviceTypeId?: number;
   price: number;
 }
