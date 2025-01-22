@@ -15,13 +15,12 @@ const Layout = ({ children }: LayoutProps) => {
   useEffect(() => {
     const isLoggedIn = localStorage.getItem("isLoggedIn");
 
-    // If not logged in, redirect to login page
     if (!isLoggedIn) {
       router.push("/login");
     }
   }, [router]);
   return (
-    <div className="flex h-screen">
+    <div className="flex">
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Header />

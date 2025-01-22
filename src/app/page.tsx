@@ -7,10 +7,10 @@ const IndexPage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    router.push("/login"); // Redirect to login page on first load
+    router.push("/login");
   }, [router]);
 
-  return null; // No need to render anything, just redirect
+  return null;
 };
 
 export default IndexPage;
