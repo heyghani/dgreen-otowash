@@ -5,6 +5,7 @@ import { ThemeProvider } from "@mui/material";
 import { StoreProvider } from "@/store/storeProvider";
 import SnackbarNotification from "@/components/Snackbar";
 import { theme } from "@/styles/theme";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -35,6 +36,7 @@ export default function RootLayout({
         <StoreProvider>
           <ThemeProvider theme={theme}>{children}</ThemeProvider>
           <SnackbarNotification />
+          <SpeedInsights />
         </StoreProvider>
       </body>
     </html>

@@ -25,7 +25,7 @@ export interface IOrderItem {
 }
 
 export interface IAddOn {
-  id?: number;
+  id: number;
   addOnName: string;
   price: number;
   orderAddOns?: IOrderAddOn[];
@@ -36,18 +36,19 @@ export interface IOrderAddOn {
   orderId?: number;
   addOnId?: number;
   quantity: number;
-  totalPrice: number;
+  price: number;
 }
 
 export interface IService {
   id?: number;
   serviceName: string;
-  serviceType: IServiceType[];
+  serviceTypes: IServiceType[];
   price: number;
   orderServices?: IOrderService[];
 }
 
 export interface IServiceType {
+  id?: number;
   serviceType: string;
   price: number;
 }

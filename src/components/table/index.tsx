@@ -14,6 +14,7 @@ import {
   Pagination,
   PaginationItem,
   useTheme,
+  Chip,
 } from "@mui/material";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 
@@ -23,6 +24,8 @@ import { RootState } from "@/store/rootReducer";
 import { updatePagination } from "@/store/slices/paginationSlice";
 import { TableProps, TableCustomCellProps } from "./table.types";
 import TableHeader from "./header";
+import moment from "moment";
+import { rupiahFormatter } from "@/utils/rupiahFormatter";
 
 const TableCustomCell = (props: TableCustomCellProps) => {
   return (
@@ -36,6 +39,72 @@ const TableCustomCell = (props: TableCustomCellProps) => {
               sx={{ paddingY: "8px" }}
             >
               {props.action(props.item.id)}
+            </TableCell>
+          );
+        }
+        if (column.label.toLowerCase() === "start time") {
+          return (
+            <TableCell
+              align={column.align}
+              key={column.label + props.item.id + idx}
+              sx={{ paddingY: "8px" }}
+            >
+              {moment(props.item[column.id]).format("HH:mm DD MMM YY")}
+            </TableCell>
+          );
+        }
+        if (column.label.toLowerCase() === "finish time") {
+          return (
+            <TableCell
+              align={column.align}
+              key={column.label + props.item.id + idx}
+              sx={{ paddingY: "8px" }}
+            >
+              {props.item[column.id]
+                ? moment(props.item[column.id]).format("HH:mm DD MMM YY")
+                : "-"}
+            </TableCell>
+          );
+        }
+        if (column.label.toLowerCase() === "service types") {
+          return (
+            <TableCell
+              align={column.align}
+              key={column.label + props.item.id + idx}
+              sx={{ paddingY: "8px" }}
+            >
+              {props.item[column.id].map((item: any, idx: number) => (
+                <Chip
+                  key={idx}
+                  label={`${item.serviceType}: ${rupiahFormatter(item.price)}`}
+                  sx={{
+                    marginRight: "5px",
+                    textTransform: "capitalize",
+                  }}
+                />
+              ))}
+            </TableCell>
+          );
+        }
+        if (column.label.toLowerCase() === "status") {
+          return (
+            <TableCell
+              align={column.align}
+              key={column.label + props.item.id + idx}
+              sx={{
+                fontSize: "16px",
+                paddingY: "8px",
+              }}
+            >
+              <Chip
+                label={props.item[column.id]}
+                sx={{
+                  background:
+                    props.item[column.id] === "completed"
+                      ? "#259420"
+                      : "#BA8623",
+                }}
+              />
             </TableCell>
           );
         }
@@ -60,7 +129,7 @@ const TableCustomCell = (props: TableCustomCellProps) => {
 const TableComponent: React.FC<TableProps> = (props: TableProps) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const { pagination } = useSelector((state: RootState) => state);
+  const { pagination, filter } = useSelector((state: RootState) => state);
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
@@ -107,40 +176,106 @@ const TableComponent: React.FC<TableProps> = (props: TableProps) => {
               </TableRow>
             </TableHead>
             <TableBody sx={{ minHeight: 640 }}>
-              {props.tableData?.map((item: any, idx: number) => (
-                <TableRow key={idx}>
-                  <TableCustomCell
-                    headCell={props.headCell}
-                    item={item}
-                    action={props.action ? props.action : undefined}
-                  />
-                </TableRow>
-              ))}
-              {props.tableData.length < 15 ? (
-                <TableRow>
-                  <TableCell colSpan={props.headCell.length}>
-                    <Stack
-                      alignItems="center"
-                      justifyContent="center"
-                      height={30 * (15 - props.tableData.length)}
-                    ></Stack>
-                  </TableCell>
-                </TableRow>
+              {!props.loading && props.tableData?.length > 0 ? (
+                <>
+                  {props.tableData?.map((item: any, idx: number) => (
+                    <TableRow key={idx}>
+                      <TableCustomCell
+                        headCell={props.headCell}
+                        item={item}
+                        action={props.action ? props.action : undefined}
+                      />
+                    </TableRow>
+                  ))}
+                  {props.tableData.length < 15 ? (
+                    <TableRow>
+                      <TableCell colSpan={props.headCell.length}>
+                        <Stack
+                          alignItems="center"
+                          justifyContent="center"
+                          height={49 * (15 - props.tableData.length)}
+                        ></Stack>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    <></>
+                  )}
+                </>
               ) : (
-                <></>
-              )}
-              {props.loading && (
-                <TableRow>
-                  <TableCell colSpan={props.headCell.length}>
-                    <Stack
-                      alignItems="center"
-                      justifyContent="center"
-                      height={640}
-                    >
-                      <Typography fontSize="20px">Loading...</Typography>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
+                <>
+                  {props.loading ? (
+                    <TableRow>
+                      <TableCell colSpan={props.headCell.length}>
+                        <Stack
+                          alignItems="center"
+                          justifyContent="center"
+                          height={640}
+                        >
+                          <Typography fontSize="20px">Loading...</Typography>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    <>
+                      {filter.query && props.totalData === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={props.headCell.length}>
+                            <Stack
+                              alignItems="center"
+                              justifyContent="center"
+                              height={640}
+                            >
+                              <Typography
+                                fontSize="20px"
+                                fontWeight={600}
+                                mt={1}
+                                sx={{ color: "white" }}
+                              >
+                                Data not found
+                              </Typography>
+                              <Typography
+                                fontSize="16px"
+                                fontWeight={400}
+                                sx={{ textAlign: "center" }}
+                              >
+                                We couldn&apos;t find the data you&apos;re
+                                looking for
+                              </Typography>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        <>
+                          <TableRow>
+                            <TableCell colSpan={props.headCell.length}>
+                              <Stack
+                                alignItems="center"
+                                justifyContent="center"
+                                height={640}
+                              >
+                                <Typography
+                                  fontSize="20px"
+                                  fontWeight={600}
+                                  mt={2}
+                                  sx={{ color: "white" }}
+                                >
+                                  No data available
+                                </Typography>
+                                <Typography
+                                  fontSize="16px"
+                                  fontWeight={400}
+                                  sx={{ textAlign: "center" }}
+                                >
+                                  Once recorded, your data will showed here.
+                                </Typography>
+                              </Stack>
+                            </TableCell>
+                          </TableRow>
+                        </>
+                      )}
+                    </>
+                  )}
+                </>
               )}
             </TableBody>
           </Table>
@@ -164,10 +299,10 @@ const TableComponent: React.FC<TableProps> = (props: TableProps) => {
               onChange={handlePageChange}
               sx={{
                 ".MuiPaginationItem-root": {
-                  color: "white",
+                  color: "black",
                   "&.Mui-selected": {
                     background: "primary",
-                    color: "black",
+                    color: "white",
                   },
                 },
               }}

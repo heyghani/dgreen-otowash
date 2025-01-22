@@ -5,7 +5,7 @@ import React from "react";
 import Table from "@/components/table";
 
 import { IHeadCell } from "@/components/table/table.types";
-import { IOrder } from "@/libs/interfaces/order";
+import { IService } from "@/libs/interfaces/order";
 import { PencilSimple, TrashSimple } from "@phosphor-icons/react";
 
 const headCells: IHeadCell[] = [
@@ -17,46 +17,18 @@ const headCells: IHeadCell[] = [
     label: "ID",
   },
   {
-    id: "customerName",
+    id: "serviceName",
     align: "left",
     disablePadding: false,
     sort: false,
     label: "Name",
   },
   {
-    id: "unitName",
+    id: "serviceTypes",
     align: "left",
     disablePadding: false,
     sort: false,
-    label: "Unit",
-  },
-  {
-    id: "unitNumber",
-    align: "center",
-    disablePadding: false,
-    sort: false,
-    label: "Unit Number",
-  },
-  {
-    id: "startTime",
-    align: "center",
-    disablePadding: false,
-    sort: false,
-    label: "Start Time",
-  },
-  {
-    id: "finishTime",
-    align: "center",
-    disablePadding: false,
-    sort: false,
-    label: "Finish Time",
-  },
-  {
-    id: "status",
-    align: "center",
-    disablePadding: false,
-    sort: false,
-    label: "Status",
+    label: "Service Types",
   },
   {
     id: "action",
@@ -69,23 +41,20 @@ const headCells: IHeadCell[] = [
 
 interface TableContentProps {
   isLoading: boolean;
-  data: IOrder[];
+  data: IService[];
   page: number;
   totalPage: number;
   totalData: number;
-  onClickEdit: (id: number) => void;
 }
 
 const TableContent: React.FC<TableContentProps> = (
   props: TableContentProps
 ) => {
-  const TableAction = (id: number) => {
+  const TableAction = () => {
     return (
       <>
         <button
-          onClick={() => {
-            props.onClickEdit(id);
-          }}
+          onClick={() => {}}
           className="bg-[#fbc02d] text-white px-3 py-2 mr-2 shadow-lg rounded-lg"
         >
           <PencilSimple size={16} />

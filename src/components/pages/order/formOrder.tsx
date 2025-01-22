@@ -1,5 +1,5 @@
 "use client";
-import { IAddOn, IOrder, IService } from "@/libs/interfaces/order";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Dialog,
@@ -8,171 +8,317 @@ import {
   DialogTitle,
   TextField,
   Box,
-  Grid2 as Grid,
+  MenuItem,
+  Grid,
+  Typography,
+  IconButton,
 } from "@mui/material";
-import React, { useState } from "react";
+import { Delete } from "@mui/icons-material";
+
+import { IAddOn, IService } from "@/libs/interfaces/order";
 
 interface FormOrderProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: IOrder) => void; // Function to handle form submission
+  onSubmit: (data: any) => void;
+  fetchServices: () => Promise<IService[]>;
+  fetchAddOns: () => Promise<IAddOn[]>;
 }
 
-const FormOrder: React.FC<FormOrderProps> = ({ open, onClose, onSubmit }) => {
-  // Local state for form inputs
-  const [startTime, setStartTime] = useState<string>("");
-  const [finishTime, setFinishTime] = useState<string>("");
-  const [unitNumber, setUnitNumber] = useState<string>("");
-  const [unitName, setUnitName] = useState<string>("");
-  const [customerName, setCustomerName] = useState<string>("");
-  const [address, setAddress] = useState<string>("");
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
-  const [items, setItems] = useState<string[]>([""]); // Initialize with one empty item
-  const [services, setServices] = useState<IService[]>([]); // Placeholder for selected services
-  const [addOns, setAddOns] = useState<IAddOn[]>([]); // Placeholder for selected add-ons
+const FormOrder: React.FC<FormOrderProps> = ({
+  open,
+  onClose,
+  onSubmit,
+  fetchServices,
+  fetchAddOns,
+}) => {
+  const [customerDetails, setCustomerDetails] = useState({
+    unitNumber: "",
+    unitName: "",
+    customerName: "",
+    address: "",
+    phoneNumber: "",
+  });
+  const [services, setServices] = useState<
+    { serviceId: number; serviceTypeId: number }[]
+  >([]);
+  const [addOns, setAddOns] = useState<
+    { id: number; quantity: number; price: number }[]
+  >([]);
+  const [items, setItems] = useState<string[]>([]);
   const [discount, setDiscount] = useState<number>(0);
+  const [serviceOptions, setServiceOptions] = useState<IService[]>([]);
+  const [addOnOptions, setAddOnOptions] = useState<IAddOn[]>([]);
 
-  const handleSubmit = () => {
-    // Prepare data for submission
-    const orderData: IOrder = {
-      startTime,
-      finishTime,
-      unitNumber,
-      unitName,
-      customerName,
-      address,
-      phoneNumber,
-      items,
-      services, // Fill this with the selected services
-      addOns, // Fill this with the selected add-ons
-      discount,
-      totalPaid: 0, // You might want to calculate this based on your logic
-      totalItems: items.length,
-      totalChanges: 0, // Set according to your business logic
+  useEffect(() => {
+    const loadOptions = async () => {
+      const fetchedServices = await fetchServices();
+      const fetchedAddOns = await fetchAddOns();
+      setServiceOptions(fetchedServices);
+      setAddOnOptions(fetchedAddOns);
     };
 
-    // Call the onSubmit prop to handle the submission
-    onSubmit(orderData);
-    onClose(); // Close the dialog after submission
+    loadOptions();
+  }, [fetchServices, fetchAddOns]);
+
+  const handleCustomerChange = (field: string, value: string) => {
+    setCustomerDetails((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddService = () => {
+    setServices((prev) => [...prev, { serviceId: 0, serviceTypeId: 0 }]);
+  };
+
+  const handleServiceChange = (index: number, key: string, value: number) => {
+    setServices((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [key]: value };
+      return updated;
+    });
+  };
+
+  const handleRemoveService = (index: number) => {
+    setServices((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddAddOn = () => {
+    setAddOns((prev) => [...prev, { id: 0, quantity: 1, price: 0 }]);
+  };
+
+  const handleAddOnChange = (index: number, key: string, value: number) => {
+    setAddOns((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [key]: value };
+
+      // Update the price automatically when ID changes
+      if (key === "id") {
+        const selectedAddOn = addOnOptions.find((a) => a.id === value);
+        updated[index].price = selectedAddOn ? selectedAddOn.price : 0;
+      }
+
+      return updated;
+    });
+  };
+
+  const handleRemoveAddOn = (index: number) => {
+    setAddOns((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddItem = () => {
+    setItems((prev) => [...prev, ""]);
+  };
+
+  const handleItemChange = (index: number, value: string) => {
+    setItems((prev) => {
+      const updated = [...prev];
+      updated[index] = value;
+      return updated;
+    });
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = () => {
+    const data = {
+      customerDetails,
+      services,
+      addOns,
+      items,
+      discount,
+    };
+    onSubmit(data);
   };
 
   return (
-    <React.Fragment>
-      <Dialog open={open} onClose={onClose} fullWidth={true} maxWidth="md">
-        <DialogTitle>Add New Order</DialogTitle>
-        <DialogContent>
-          <Box component="form" noValidate autoComplete="off">
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+      <DialogTitle>Add New Order</DialogTitle>
+      <DialogContent>
+        <Box component="form" noValidate autoComplete="off">
+          {/* Customer Details */}
+          <Typography variant="h6" gutterBottom>
+            Customer Details
+          </Typography>
+          <Grid container spacing={2}>
+            {Object.keys(customerDetails).map((key) => (
+              <Grid item xs={6} key={key}>
                 <TextField
-                  label="Start Time"
-                  type="datetime-local"
+                  label={key.replace(/([A-Z])/g, " $1")}
                   fullWidth
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  required
+                  value={customerDetails[key as keyof typeof customerDetails]}
+                  onChange={(e) => handleCustomerChange(key, e.target.value)}
                 />
               </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Finish Time"
-                  type="datetime-local"
-                  fullWidth
-                  value={finishTime}
-                  onChange={(e) => setFinishTime(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Unit Number"
-                  fullWidth
-                  value={unitNumber}
-                  onChange={(e) => setUnitNumber(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Unit Name"
-                  fullWidth
-                  value={unitName}
-                  onChange={(e) => setUnitName(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Customer Name"
-                  fullWidth
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Address"
-                  fullWidth
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Phone Number"
-                  fullWidth
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Discount"
-                  type="number"
-                  fullWidth
-                  value={discount}
-                  onChange={(e) => setDiscount(Number(e.target.value))}
-                />
-              </Grid>
-              {/* You might want to add fields for items, services, and add-ons here */}
-              {/* For items, you can use a loop to generate input fields based on the current state */}
-              {items.map((item, index) => (
-                <Grid size={{ xs: 6 }} key={index}>
-                  <TextField
-                    label={`Item ${index + 1}`}
-                    fullWidth
-                    value={item}
-                    onChange={(e) => {
-                      const newItems = [...items];
-                      newItems[index] = e.target.value;
-                      setItems(newItems);
-                    }}
-                  />
+            ))}
+          </Grid>
+
+          {/* Services and Add-Ons */}
+          <Grid container spacing={2} marginTop={4}>
+            {/* Services */}
+            <Grid item xs={6}>
+              <Typography variant="h6" gutterBottom>
+                Services
+              </Typography>
+              {services.map((service, index) => (
+                <Grid container spacing={2} key={index} alignItems="center">
+                  <Grid item xs={5}>
+                    <TextField
+                      select
+                      label="Service"
+                      fullWidth
+                      value={service.serviceId || ""}
+                      onChange={(e) =>
+                        handleServiceChange(
+                          index,
+                          "serviceId",
+                          parseInt(e.target.value, 10)
+                        )
+                      }
+                    >
+                      {serviceOptions.map((s) => (
+                        <MenuItem key={s.id} value={s.id}>
+                          {s.serviceName}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={5}>
+                    <TextField
+                      select
+                      label="Service Type"
+                      fullWidth
+                      value={service.serviceTypeId || ""}
+                      onChange={(e) =>
+                        handleServiceChange(
+                          index,
+                          "serviceTypeId",
+                          parseInt(e.target.value, 10)
+                        )
+                      }
+                      disabled={!service.serviceId}
+                    >
+                      {serviceOptions
+                        .find((s) => s.id === service.serviceId)
+                        ?.serviceTypes.map((type) => (
+                          <MenuItem key={type.id} value={type.id}>
+                            {type.serviceType} - {type.price.toLocaleString()}
+                          </MenuItem>
+                        ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={2}>
+                    <IconButton onClick={() => handleRemoveService(index)}>
+                      <Delete />
+                    </IconButton>
+                  </Grid>
                 </Grid>
               ))}
-              <Grid size={{ xs: 6 }}>
-                <Button
-                  onClick={() => setItems([...items, ""])} // Add a new item input field
-                  variant="outlined"
-                >
-                  Add Item
-                </Button>
-              </Grid>
-              {/* You can implement similar logic for services and add-ons */}
+              <Button onClick={handleAddService}>Add Service</Button>
             </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit} type="submit" color="primary">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </React.Fragment>
+
+            {/* Add-Ons */}
+            <Grid item xs={6}>
+              <Typography variant="h6" gutterBottom>
+                Add-Ons
+              </Typography>
+              {addOns.map((addOn, index) => (
+                <Grid container spacing={2} key={index} alignItems="center">
+                  <Grid item xs={7}>
+                    <TextField
+                      select
+                      label="Add-On"
+                      fullWidth
+                      value={addOn.id || ""}
+                      onChange={(e) =>
+                        handleAddOnChange(
+                          index,
+                          "id",
+                          parseInt(e.target.value, 10)
+                        )
+                      }
+                    >
+                      {addOnOptions.map((a) => (
+                        <MenuItem key={a.id} value={a.id}>
+                          {`${a.addOnName} - ${a.price.toLocaleString()}`}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <TextField
+                      type="number"
+                      label="Quantity"
+                      fullWidth
+                      value={addOn.quantity}
+                      onChange={(e) =>
+                        handleAddOnChange(
+                          index,
+                          "quantity",
+                          parseInt(e.target.value, 10)
+                        )
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={2}>
+                    <IconButton onClick={() => handleRemoveAddOn(index)}>
+                      <Delete />
+                    </IconButton>
+                  </Grid>
+                </Grid>
+              ))}
+              <Button onClick={handleAddAddOn}>Add Add-On</Button>
+            </Grid>
+          </Grid>
+
+          {/* Items and Discount */}
+          <Grid container spacing={2} marginTop={4}>
+            <Grid item xs={6}>
+              <Typography variant="h6" gutterBottom>
+                Items
+              </Typography>
+              {items.map((item, index) => (
+                <Grid container spacing={2} key={index} alignItems="center">
+                  <Grid item xs={10}>
+                    <TextField
+                      fullWidth
+                      label={`Item ${index + 1}`}
+                      value={item}
+                      onChange={(e) => handleItemChange(index, e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={2}>
+                    <IconButton onClick={() => handleRemoveItem(index)}>
+                      <Delete />
+                    </IconButton>
+                  </Grid>
+                </Grid>
+              ))}
+              <Button onClick={handleAddItem}>Add Item</Button>
+            </Grid>
+
+            <Grid item xs={5}>
+              <Typography variant="h6" gutterBottom>
+                Discount
+              </Typography>
+              <TextField
+                type="number"
+                label="Discount"
+                fullWidth
+                value={discount}
+                onChange={(e) => setDiscount(parseFloat(e.target.value))}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSubmit} variant="contained" color="primary">
+          Submit
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
