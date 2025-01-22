@@ -17,7 +17,7 @@ export default function ServicesPage() {
     setIsLoading(true);
     try {
       const response = await axios.get<IService[]>("/api/services");
-      setServices(response.data.data);
+    setServices(response.data);
       if (response.status == 200) {
         setIsLoading(false);
       }
@@ -27,6 +27,7 @@ export default function ServicesPage() {
   };
 
   useEffect(() => {
+    console.log(showModal);
     fetchData();
   }, []);
   return (

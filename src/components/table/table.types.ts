@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // import modules
 import React from "react";
 import { TableCellProps } from "@mui/material";

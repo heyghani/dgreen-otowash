@@ -114,6 +114,7 @@ export default function OrdersPage() {
         <TableOrder
           data={orders}
           onClickEdit={onEdit}
+          onClickDelete={handleDelete}
           isLoading={isLoading}
           totalData={orders.length}
           page={1}

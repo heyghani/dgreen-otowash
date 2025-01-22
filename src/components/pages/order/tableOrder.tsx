@@ -74,6 +74,7 @@ interface TableContentProps {
   totalPage: number;
   totalData: number;
   onClickEdit: (id: number) => void;
+  onClickDelete: (id: number) => void;
 }
 
 const TableContent: React.FC<TableContentProps> = (
@@ -91,7 +92,9 @@ const TableContent: React.FC<TableContentProps> = (
           <PencilSimple size={16} />
         </button>
         <button
-          onClick={() => {}}
+          onClick={() => {
+            props.onClickDelete(id);
+          }}
           className="bg-[#f44336] text-white px-3 py-2 shadow-lg rounded-lg"
         >
           <TrashSimple size={16} />
